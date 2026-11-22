@@ -1,0 +1,24 @@
+name: dichoyhecho
+
+services:
+  migrate:
+    image: ghcr.io/amacneil/dbmate:2
+    env_file: ../.env
+    command: ["--migrations-dir", "/db/migrations", "--no-dump-schema", "up"]
+    volumes:
+      - ../db:/db:ro
+    profiles: ["tools"]
+
+  worker:
+    build: ../apps/worker
+    env_file: ../.env
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"   # solo accesible vía Nginx
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  # render (Remotion) y publisher se suman en el sprint 5
